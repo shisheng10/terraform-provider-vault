@@ -109,6 +109,13 @@ func pkiSecretBackendRoleResource() *schema.Resource {
 				Description: "Flag to allow any name",
 				Default:     false,
 			},
+			"allow_wildcard_certificates": {
+				Type:        schema.TypeBool,
+				Required:    false,
+				Optional:    true,
+				Description: "Flag to allow wildcard certificates",
+				Default:     true,
+			},
 			"enforce_hostnames": {
 				Type:        schema.TypeBool,
 				Required:    false,
@@ -402,6 +409,7 @@ func pkiSecretBackendRoleCreate(d *schema.ResourceData, meta interface{}) error 
 		"allowed_domains_template":           d.Get("allowed_domains_template"),
 		"allow_glob_domains":                 d.Get("allow_glob_domains"),
 		"allow_any_name":                     d.Get("allow_any_name"),
+		"allow_wildcard_certificates":        d.Get("allow_wildcard_certificates"),
 		"enforce_hostnames":                  d.Get("enforce_hostnames"),
 		"allow_ip_sans":                      d.Get("allow_ip_sans"),
 		"allowed_uri_sans":                   d.Get("allowed_uri_sans"),
@@ -548,6 +556,7 @@ func pkiSecretBackendRoleRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("allow_subdomains", secret.Data["allow_subdomains"])
 	d.Set("allow_glob_domains", secret.Data["allow_glob_domains"])
 	d.Set("allow_any_name", secret.Data["allow_any_name"])
+	d.Set("allow_wildcard_certificates", secret.Data["allow_wildcard_certificates"])
 	d.Set("enforce_hostnames", secret.Data["enforce_hostnames"])
 	d.Set("allow_ip_sans", secret.Data["allow_ip_sans"])
 	d.Set("allowed_uri_sans", secret.Data["allowed_uri_sans"])
@@ -654,6 +663,10 @@ func pkiSecretBackendRoleUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	if len(allowedDomains) > 0 {
 		data["allowed_domains"] = allowedDomains
+	}
+
+	if provider.IsAPISupported(meta, provider.VaultVersion110) {
+		data["allow_wildcard_certificates"] = d.Get("allow_wildcard_certificates")
 	}
 
 	if len(keyUsage) > 0 {
